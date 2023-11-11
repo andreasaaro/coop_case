@@ -13,7 +13,7 @@ import (
 
 // Poll Mastodon api, parse data and send to channel for further processing
 func generateSourceStream(ctx context.Context, m mastodon.Mastodon, outChan chan<- []*mastodon.MastodonData) error {
-	logrus.Info("source started")
+	logrus.Info("Started source")
 
 	ticker := time.NewTicker(time.Second * 5).C
 
@@ -34,7 +34,6 @@ func generateSourceStream(ctx context.Context, m mastodon.Mastodon, outChan chan
 			case <-ctx.Done():
 				return ctx.Err()
 			case outChan <- responseData:
-				logrus.Info("response data sent to channel")
 			}
 		}
 	}

@@ -8,6 +8,8 @@ import (
 	"coop_case/config"
 	"coop_case/kafka"
 	"coop_case/mastodon"
+
+	"github.com/sirupsen/logrus"
 )
 
 type App interface {
@@ -47,6 +49,19 @@ func (a *app) Run(ctx context.Context) error {
 		defer wg.Done()
 		if err := produce(ctx, blogCh, a.producer.Input(), a.conf.KafkaConfig); err != nil {
 			fmt.Println("error produce source")
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer logrus.Infof("exiting error handler")
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			logrus.Infof("%v", ctx.Err())
+		case err := <-a.producer.Errors():
+			logrus.Infof("Producer-error: %v", err)
+
 		}
 	}()
 

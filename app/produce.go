@@ -2,20 +2,22 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
+
 	"coop_case/config"
 	"coop_case/mastodon"
-	"fmt"
+
 	"github.com/IBM/sarama"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/html"
-	"strings"
-	"time"
 )
 
 // Consume requests, loop over blog messages, parse content html string and send single blog posts as kafka messages
 func produce(ctx context.Context, sourceCh <-chan []*mastodon.MastodonData, sinkCh chan<- *sarama.ProducerMessage, cfg config.KafkaConfig) error {
-	logrus.Infoln("starting produce")
-	defer logrus.Infoln("exiting produce")
+	logrus.Infoln("Starting produce")
+	defer logrus.Infoln("Exiting produce")
 
 	for {
 		select {
@@ -35,7 +37,7 @@ func produce(ctx context.Context, sourceCh <-chan []*mastodon.MastodonData, sink
 				if blogText == "" {
 					continue
 				}
-				finalMessage := fmt.Sprintf("Micro blog id: %s published by user: %s: %s", value.ID, value.Account.Username, blogText)
+				finalMessage := fmt.Sprintf("Micro blog id: %s published by user: %s created at: %s: %s", value.ID, value.Account.Username, value.CreatedAt, blogText)
 
 				if cfg.PrintKafkaMessage {
 					fmt.Println(finalMessage)
@@ -50,10 +52,9 @@ func produce(ctx context.Context, sourceCh <-chan []*mastodon.MastodonData, sink
 				case <-ctx.Done():
 					return ctx.Err()
 				case sinkCh <- saramaMsg:
-					logrus.Info("message sent to kafka")
 				}
 
-				time.Sleep(1 * time.Second)
+				time.Sleep(500000 * time.Microsecond)
 
 			}
 		}

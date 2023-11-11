@@ -2,8 +2,10 @@ package mastodon
 
 import (
 	"context"
-	"coop_case/config"
 	"fmt"
+
+	"coop_case/config"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -36,7 +38,6 @@ func (c *client) GetBlogPosts(ctx context.Context) ([]byte, error) {
 	limit := c.cfg.Limit
 
 	return getBlogPosts(ctx, c, baseUrl, limit)
-
 }
 
 // Get Mastodon micro blogposts, timeline endpoint always returns newest blog posts. TODO: use min ID to avoid getting same id's multiple times.
@@ -44,7 +45,7 @@ func getBlogPosts(ctx context.Context, c *client, baseUrl, limit string) ([]byte
 	restyResp, err := c.restyClient.R().
 		SetQueryParams(map[string]string{
 			"limit": limit,
-			"sort":  "id",
+			"sort":  "created_at",
 			"order": "asc",
 		}).
 		SetContext(ctx).

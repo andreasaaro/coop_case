@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"coop_case/app"
 
@@ -14,20 +16,20 @@ import (
 )
 
 func main() {
-	logrus.Info("started app")
+	logrus.Info("Started app")
 	cfg := config.NewConfig()
-	// logrus.Infoln(cfg.PrintConfig(AppName, Version))
 
 	ctx, cancel := context.WithCancel(context.Background())
+	go HandleSignals(ctx, cancel)
 
 	mastodonClient, err := mastodon.NewClient(cfg.MastodonConfig)
 	if err != nil {
-		logrus.Info("unable to create mastodon client")
+		logrus.Fatalf("Failed to create mastodon client:%v", err)
 	}
 
 	kafkaProducer, err := kafka.NewSaramaProducer(cfg.KafkaConfig)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("Failed to create kafka producer:%v", err)
 	}
 	app := app.New(cfg, mastodonClient, kafkaProducer)
 
@@ -36,6 +38,16 @@ func main() {
 	}
 
 	logrus.Info("Done")
+}
 
-	fmt.Println(cancel)
+func HandleSignals(ctx context.Context, cancel context.CancelFunc) {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(signals)
+
+	select {
+	case <-ctx.Done():
+	case <-signals:
+		cancel()
+	}
 }
