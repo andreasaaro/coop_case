@@ -27,13 +27,16 @@ prepare based on your solution.
     - [x] Create a kafka producer to use in pipeline
     - [x] Send blog messages to kafka topic
 - [x] Spin up a local kafka
-- [] Create frontend service
+- [] Create minimal frontend service
     - [] Consume kafka messages
     - [] Simple web server
     - [] Push data to the frontend (maby something like this: https://www.confluent.io/blog/webify-event-streams-using-kafka-connect-http-sink/)
 - [x] Docker compose setup
 
-
+## Mastodon api
+- https://mastodon.social/api/v1/timelines/public
+- Rate limit 300 requests pr 5 minute
+- Pagination options: limit, since_id, max_id, min_id
 
 ## Architecture
 ![Landscape](/drawings/architecture.svg)

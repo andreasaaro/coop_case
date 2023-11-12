@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"coop_case/config"
 	"coop_case/mastodon"
@@ -28,8 +27,10 @@ func produce(ctx context.Context, sourceCh <-chan []*mastodon.MastodonData, sink
 				return nil
 			}
 
-			for _, value := range msg {
-				blogText, err := extractParagraphs(value.Content)
+			// Blog messages arrive in ascending order, start from end to send oldest messages first
+			for m := len(msg) - 1; m >= 0; m-- {
+
+				blogText, err := extractParagraphs(msg[m].Content)
 				if err != nil {
 					fmt.Println("Error:", err)
 				}
@@ -37,7 +38,9 @@ func produce(ctx context.Context, sourceCh <-chan []*mastodon.MastodonData, sink
 				if blogText == "" {
 					continue
 				}
-				finalMessage := fmt.Sprintf("Micro blog id: %s published by user: %s created at: %s: %s", value.ID, value.Account.Username, value.CreatedAt, blogText)
+
+				// Concatenate a string with blog info that will be sent to kafka
+				finalMessage := fmt.Sprintf("Micro-blog id: %s published by user: %s created at: %s: %s", msg[m].ID, msg[m].Account.Username, msg[m].CreatedAt, blogText)
 
 				if cfg.PrintKafkaMessage {
 					fmt.Println(finalMessage)
@@ -53,10 +56,9 @@ func produce(ctx context.Context, sourceCh <-chan []*mastodon.MastodonData, sink
 					return ctx.Err()
 				case sinkCh <- saramaMsg:
 				}
-
-				time.Sleep(500000 * time.Microsecond)
-
 			}
+
+			logrus.Info("Micro-blogs sent to kafka")
 		}
 	}
 }

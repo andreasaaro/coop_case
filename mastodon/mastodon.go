@@ -11,7 +11,7 @@ import (
 
 // Interface to interact with Mastodon api
 type Mastodon interface {
-	GetBlogPosts(ctx context.Context) ([]byte, error)
+	GetBlogPosts(ctx context.Context, sinceId string) ([]byte, error)
 }
 
 type client struct {
@@ -33,20 +33,21 @@ func NewClient(cfg config.MastodonConfig) (Mastodon, error) {
 	return c, nil
 }
 
-func (c *client) GetBlogPosts(ctx context.Context) ([]byte, error) {
+func (c *client) GetBlogPosts(ctx context.Context, sinceId string) ([]byte, error) {
 	baseUrl := c.cfg.Url
 	limit := c.cfg.Limit
 
-	return getBlogPosts(ctx, c, baseUrl, limit)
+	return getBlogPosts(ctx, c, baseUrl, limit, sinceId)
 }
 
 // Get Mastodon micro blogposts, timeline endpoint always returns newest blog posts. TODO: use min ID to avoid getting same id's multiple times.
-func getBlogPosts(ctx context.Context, c *client, baseUrl, limit string) ([]byte, error) {
+func getBlogPosts(ctx context.Context, c *client, baseUrl, limit string, sinceId string) ([]byte, error) {
 	restyResp, err := c.restyClient.R().
 		SetQueryParams(map[string]string{
-			"limit": limit,
-			"sort":  "created_at",
-			"order": "asc",
+			"limit":    limit,
+			"sort":     "id",
+			"order":    "asc",
+			"since_id": sinceId,
 		}).
 		SetContext(ctx).
 		Get(baseUrl)

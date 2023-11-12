@@ -1,3 +1,5 @@
+# Requirements go, docker desktop, docker cli, kafkacat
+
 APP=coop_case
 TOPIC_OUT=mastodon_topic
 
@@ -23,17 +25,6 @@ docker-mastodon:
 docker-kill: 
 	docker compose down
 
-build_mastodon_to_kafka:
-	docker build -f Dockerfile --platform=linux/amd64 --no-cache -t mastodon_to_kafka .
-
-run: build_mastodon_to_kafka 
-	docker run --rm \
-		--env KAFKA_TLS_ENABLED=false --env KAFKA_SASL_MECHANISM=none \
-		--env KAFKA_BROKERS=kafka:9092 \
-		--env KAFKA_TOPIC=$(TOPIC_OUT) \
-		--env KAFKA_CONSUMER_GROUP=$(APP) \
-		-p 8000:8000 mastodon_to_kafka
-
 clean: docker-kafka
 	docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --zookeeper zookeeper:2181 --delete --topic $(TOPIC_OUT) || :
 	sleep 2
@@ -53,6 +44,6 @@ consume-kafka:
 	kcat -G $(APP) -C  -b localhost:9094 -t $(TOPIC_OUT) -e -u -q -f "%R%s"
 
 inspect-mastodon-to-kafka: 
-	docker logs --tail 5 mastodon-to-kafka 
+	docker logs -f mastodon-to-kafka 
 
 cycle: build docker-kill docker-kafka kafka-topics docker-mastodon inspect-mastodon-to-kafka

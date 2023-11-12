@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"coop_case/config"
@@ -31,25 +32,32 @@ func New(conf *config.Config, mastodon mastodon.Mastodon, producer kafka.Produce
 }
 
 func (a *app) Run(ctx context.Context) error {
-	blogCh := make(chan []*mastodon.MastodonData)
+	limitInt, err := strconv.Atoi(a.conf.MastodonConfig.Limit)
+	if err != nil {
+		return fmt.Errorf("error converting limit string to integer: %v", err)
+	}
+
+	blogCh := make(chan []*mastodon.MastodonData, limitInt)
 
 	defer close(blogCh)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func() {
+	go func() error {
 		defer wg.Done()
 		if err := generateSourceStream(ctx, a.mastodon, blogCh); err != nil {
-			fmt.Println("error gen source")
+			return fmt.Errorf("error getting source data: %v", err)
 		}
+		return nil
 	}()
 
 	wg.Add(1)
-	go func() {
+	go func() error {
 		defer wg.Done()
 		if err := produce(ctx, blogCh, a.producer.Input(), a.conf.KafkaConfig); err != nil {
-			fmt.Println("error produce source")
+			return fmt.Errorf("error producing micro-blog messages to kafka: %v", err)
 		}
+		return nil
 	}()
 
 	wg.Add(1)
@@ -58,9 +66,9 @@ func (a *app) Run(ctx context.Context) error {
 		defer wg.Done()
 		select {
 		case <-ctx.Done():
-			logrus.Infof("%v", ctx.Err())
+			logrus.Infof("context canceled: %v", ctx.Err())
 		case err := <-a.producer.Errors():
-			logrus.Infof("Producer-error: %v", err)
+			logrus.Errorf("producer-error: %v", err)
 
 		}
 	}()

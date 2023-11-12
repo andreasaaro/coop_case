@@ -38,4 +38,4 @@ services:
       KAFKA_BROKERS: "kafka:9092"
       KAFKA_TOPIC: "mastodon_topic"
       KAFKA_CONSUMER_GROUP: "mastodon"
-      PRINT_KAFKA_MESSAGE: "true"
+      PRINT_KAFKA_MESSAGE: "false"

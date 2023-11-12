@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/rickb777/date/period"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/rickb777/date/period"
 )
 
 // Configs for mastodon client and kafka producer, added some functions that enables default values and handling of int, bool.
@@ -33,7 +34,7 @@ func NewConfig() *Config {
 			Url:          getEnvIfSet("BASE_URL", "https://mastodon.social/api/v1/timelines/public"),
 			Limit:        getEnvIfSet("REQUEST_LIMIT", "40"),
 			RetryCount:   getEnvIntIfSet("RETRY_COUNT", 10),
-			PollInterval: getEnvDurationFromIsoPeriodIfSet("POLL_INTERVAL", 10*time.Second),
+			PollInterval: getEnvDurationFromIsoPeriodIfSet("POLL_INTERVAL", 5*time.Second),
 		},
 		KafkaConfig{
 			Brokers:           getEnvIfSet("KAFKA_BROKERS", "localhost:9094"),
