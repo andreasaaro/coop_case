@@ -1,6 +1,6 @@
 # Coop case
 
-## Position: Software Engineer
+## Position: Software Engineer --
 
 ## General information:
 For this recruitment process we would like you to solve a technical case assignment to better understand your experience and skills that we see as important for this position. The main objective for this case assignment is to understand your thought process and how you would approach such a task/project in a job setting.
